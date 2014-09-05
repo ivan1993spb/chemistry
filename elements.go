@@ -420,11 +420,12 @@ func LevelsShortString(l map[uint8][]uint8) (res string) {
 	}
 
 	var (
-		m         = n - 1
+		m         uint8
 		sublevstr string
 	)
 
 findsublevel:
+	m = n - 1
 	for {
 		if l[n][m] > 0 {
 			break
@@ -451,6 +452,54 @@ nextlevel:
 		goto nextlevel
 	}
 
-	m = n - 1
 	goto findsublevel
+}
+
+func Valence(l map[uint8][]uint8) (v uint8) {
+	// fmt.Println(LevelsFullString(l))
+	// fmt.Println(LevelsShortString(l))
+	// n := uint8(len(l))
+	// if n == 0 {
+	// 	return 0
+	// }
+
+	// var (
+	// 	m           = n
+	// 	count uint8 = 0
+	// )
+
+	// for m > 0 {
+	// 	m -= 1
+	// 	count += l[n][m] % 2
+	// }
+
+	// fmt.Println(n, 4*n-2, count)
+	// return 0
+	// if n := uint8(len(l)); n > 0 {
+	// 	if l[n][n-1] != 4*n-2 {
+	// 		var m = n - 1
+	// 		for {
+	// 			if l[n][m] > 0 {
+	// 				break
+	// 			}
+	// 			if m == 0 {
+	// 				break
+	// 			}
+	// 			m--
+	// 		}
+	// 		l[n][m] -= 1
+	// 		l[n][m+1] += 1
+	// 	}
+	// }
+	for n := uint8(len(l)); n > 0; n-- {
+		var m = n
+		for m > 0 {
+			m -= 1
+			if 2*(2*m+1) != l[n][m] {
+				v += l[n][m]
+			}
+		}
+	}
+
+	return
 }
