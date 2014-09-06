@@ -115,3 +115,8 @@ func TestLevels(t *testing.T) {
 		fmt.Println("ok")
 	}
 }
+
+func Test_(t *testing.T) {
+	fmt.Println(ELEMENT_Usu)
+	fmt.Println(ELEMENT_Uoq)
+}
