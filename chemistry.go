@@ -25,6 +25,7 @@ func (e Element) String() string {
 	return ""
 }
 
+// Symbol returns symbol
 func (e Element) Symbol() string {
 	if _, ok := names[e]; ok {
 		return names[e][0]
@@ -32,6 +33,7 @@ func (e Element) Symbol() string {
 	return ""
 }
 
+// Name returns full name
 func (e Element) Name() string {
 	if _, ok := names[e]; ok {
 		return names[e][1]
@@ -39,6 +41,7 @@ func (e Element) Name() string {
 	return ""
 }
 
+// Weight returns atomic weight
 func (e Element) Weight() float32 {
 	if _, ok := weights[e]; ok {
 		return weights[e]
@@ -46,10 +49,12 @@ func (e Element) Weight() float32 {
 	return 0
 }
 
+// AtomicNumber returns element atomic number
 func (e Element) AtomicNumber() AtomicNumber {
 	return AtomicNumber(e)
 }
 
+// ElectronConfiguration calculates atomic electron configuration
 func (e Element) ElectronConfiguration() ElectronConfiguration {
 	var (
 		n     uint8 = 1        // principal quantum number (n > 0)
@@ -160,6 +165,8 @@ sublevel:
 
 var orbitals = "spdfghigk"
 
+// ElectronConfiguration object describes distribution of electrons
+// of an atom in atomic orbitals
 type ElectronConfiguration map[uint8][]uint8
 
 func (ec ElectronConfiguration) String() string {
