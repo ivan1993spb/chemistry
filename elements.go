@@ -8,6 +8,13 @@ func (n AtomicNumber) String() string {
 	return strconv.Itoa(int(n)) + "e"
 }
 
+type ErrInvalidElectronConfiguration uint8
+
+func (e ErrInvalidElectronConfiguration) Error() string {
+	return "Invalid electron configuration on shell " +
+		strconv.Itoa(int(e))
+}
+
 type Element byte
 
 const (
@@ -273,27 +280,31 @@ var (
 )
 
 func (e Element) String() string {
-	return symbols[e]
+	if _, ok := symbols[e]; ok {
+		return symbols[e] + "(" + strconv.Itoa(int(e)) + ") " +
+			e.ElectronConfiguration().Short()
+	}
+	return ""
 }
 
 func (e Element) AtomicNumber() AtomicNumber {
 	return AtomicNumber(e)
 }
 
-func (e Element) Levels() (levels map[uint8][]uint8) {
+func (e Element) ElectronConfiguration() ElectronConfiguration {
 	var (
-		n     = uint8(1) // main quantum number (n > 0)
-		l     = uint8(0) // orbital quantum number (n - 1)
-		count = uint8(e) // electron count
+		n     uint8 = 1        // principal quantum number (n > 0)
+		l     uint8 = 0        // azimuthal quantum number (n - 1)
+		count       = uint8(e) // electron count
 	)
 
-	levels = make(map[uint8][]uint8)
+	ec := make(ElectronConfiguration)
 
 level:
 	{
-		// create energy sublevels
-		if len(levels[n]) == 0 {
-			levels[n] = make([]uint8, n)
+		// create energy sublevel slice
+		if len(ec[n]) == 0 {
+			ec[n] = make([]uint8, n)
 		}
 	}
 
@@ -301,10 +312,10 @@ sublevel:
 	{
 		sublevelLength := 2 * (2*l + 1)
 		if count > sublevelLength {
-			levels[n][l] += sublevelLength
+			ec[n][l] += sublevelLength
 			count -= sublevelLength
 		} else {
-			levels[n][l] += count
+			ec[n][l] += count
 			count = 0
 		}
 	}
@@ -351,49 +362,56 @@ sublevel:
 	}
 
 	// electron skipping
-
 	switch e {
 	case ELEMENT_Cr, ELEMENT_Cu:
-		levels[4][0] -= 1
-		levels[3][2] += 1
+		ec[4][0] -= 1
+		ec[3][2] += 1
 
 	case ELEMENT_Nb, ELEMENT_Mo, ELEMENT_Ru, ELEMENT_Rh, ELEMENT_Ag:
-		levels[5][0] -= 1
-		levels[4][2] += 1
+		ec[5][0] -= 1
+		ec[4][2] += 1
 
 	case ELEMENT_Pd:
-		levels[5][0] -= 2
-		levels[4][2] += 2
+		ec[5][0] -= 2
+		ec[4][2] += 2
 
 	case ELEMENT_Pt, ELEMENT_Au:
-		levels[6][0] -= 1
-		levels[5][2] += 1
+		ec[6][0] -= 1
+		ec[5][2] += 1
 
 	case ELEMENT_Ds, ELEMENT_Rg:
-		levels[7][0] -= 1
-		levels[6][2] += 1
+		ec[7][0] -= 1
+		ec[6][2] += 1
 
 	case ELEMENT_La, ELEMENT_Gd:
-		levels[4][3] -= 1
-		levels[5][2] += 1
+		ec[4][3] -= 1
+		ec[5][2] += 1
 
 	case ELEMENT_Ac, ELEMENT_Pa, ELEMENT_U, ELEMENT_Np, ELEMENT_Cm:
-		levels[5][3] -= 1
-		levels[6][2] += 1
+		ec[5][3] -= 1
+		ec[6][2] += 1
 
 	case ELEMENT_Th:
-		levels[5][3] -= 2
-		levels[6][2] += 2
+		ec[5][3] -= 2
+		ec[6][2] += 2
 	}
 
-	return
+	return ec
 }
 
-func LevelsFullString(l map[uint8][]uint8) (res string) {
-	for n := uint8(1); int(n) <= len(l); n++ {
-		_, ok := l[n]
-		if !ok || int(n) != len(l[n]) || int(n)-1 > len(orbitals) {
-			panic("invalid formula")
+type ElectronConfiguration map[uint8][]uint8
+
+func (ec ElectronConfiguration) String() string {
+	var (
+		n   uint8 = 1
+		str string
+	)
+
+	for int(n) <= len(ec) {
+		_, ok := ec[n]
+
+		if !ok || int(n) != len(ec[n]) || int(n)-1 > len(orbitals) {
+			panic(ErrInvalidElectronConfiguration(n))
 		}
 
 		var delim string
@@ -401,43 +419,48 @@ func LevelsFullString(l map[uint8][]uint8) (res string) {
 			delim = " "
 		}
 
-		for m := uint8(0); m < n; m++ {
-			if l[n][m] > 0 {
-				res += delim + strconv.Itoa(int(n)) +
-					string(orbitals[m]) + "^" +
-					strconv.Itoa(int(l[n][m]))
+		var l uint8
+		for l < n {
+			if ec[n][l] > 0 {
+				str += delim + strconv.Itoa(int(n)) +
+					string(orbitals[l]) + "^" +
+					strconv.Itoa(int(ec[n][l]))
 			}
+			l += 1
 		}
 
+		n += 1
+
 	}
-	return
+
+	return str
 }
 
-func LevelsShortString(l map[uint8][]uint8) (res string) {
-	n := uint8(len(l))
-	if n == 0 {
+func (ec ElectronConfiguration) Short() (res string) {
+	var n uint8
+	if n = uint8(len(ec)); n == 0 {
 		return
 	}
 
 	var (
-		m         uint8
+		l         uint8
 		sublevstr string
 	)
 
 findsublevel:
-	m = n - 1
+	l = n - 1
 	for {
-		if l[n][m] > 0 {
+		if ec[n][l] > 0 {
 			break
 		}
-		if m == 0 {
+		if l == 0 {
 			goto nextlevel
 		}
-		m--
+		l -= 1
 	}
 
-	sublevstr = strconv.Itoa(int(n)) + string(orbitals[m]) + "^" +
-		strconv.Itoa(int(l[n][m]))
+	sublevstr = strconv.Itoa(int(n)) + string(orbitals[l]) + "^" +
+		strconv.Itoa(int(ec[n][l]))
 	if len(res) > 0 {
 		res = sublevstr + " " + res
 	} else {
@@ -445,61 +468,90 @@ findsublevel:
 	}
 
 nextlevel:
-	if n -= 1; n == 0 || len(l[n]) != int(n) {
+	if n -= 1; n == 0 {
 		return
 	}
-	if l[n][n-1] == 4*n-2 {
+	if int(n) != len(ec[n]) {
+		panic(ErrInvalidElectronConfiguration(n))
+	}
+	if ec[n][n-1] == 4*n-2 {
 		goto nextlevel
 	}
 
 	goto findsublevel
 }
 
-func Valence(l map[uint8][]uint8) (v uint8) {
-	// fmt.Println(LevelsFullString(l))
-	// fmt.Println(LevelsShortString(l))
-	// n := uint8(len(l))
-	// if n == 0 {
-	// 	return 0
-	// }
+func (ec ElectronConfiguration) EnergyPerShell() []uint8 {
+	var (
+		levels = make([]uint8, 0)
+		n      uint8
+	)
 
-	// var (
-	// 	m           = n
-	// 	count uint8 = 0
-	// )
-
-	// for m > 0 {
-	// 	m -= 1
-	// 	count += l[n][m] % 2
-	// }
-
-	// fmt.Println(n, 4*n-2, count)
-	// return 0
-	// if n := uint8(len(l)); n > 0 {
-	// 	if l[n][n-1] != 4*n-2 {
-	// 		var m = n - 1
-	// 		for {
-	// 			if l[n][m] > 0 {
-	// 				break
-	// 			}
-	// 			if m == 0 {
-	// 				break
-	// 			}
-	// 			m--
-	// 		}
-	// 		l[n][m] -= 1
-	// 		l[n][m+1] += 1
-	// 	}
-	// }
-	for n := uint8(len(l)); n > 0; n-- {
-		var m = n
-		for m > 0 {
-			m -= 1
-			if 2*(2*m+1) != l[n][m] {
-				v += l[n][m]
-			}
+	for n = 1; int(n) <= len(ec); n++ {
+		if int(n) != len(ec[n]) {
+			panic(ErrInvalidElectronConfiguration(n))
 		}
+
+		var (
+			energy uint8
+			l      uint8
+		)
+
+		for int(l) < len(ec[n]) {
+			energy += ec[n][l]
+			l += 1
+		}
+		levels = append(levels, energy)
 	}
 
-	return
+	return levels
 }
+
+// func Valence(l map[uint8][]uint8) (v uint8) {
+// fmt.Println(LevelsFullString(l))
+// fmt.Println(LevelsShortString(l))
+// n := uint8(len(l))
+// if n == 0 {
+// 	return 0
+// }
+
+// var (
+// 	m           = n
+// 	count uint8 = 0
+// )
+
+// for m > 0 {
+// 	m -= 1
+// 	count += l[n][m] % 2
+// }
+
+// fmt.Println(n, 4*n-2, count)
+// return 0
+// if n := uint8(len(l)); n > 0 {
+// 	if l[n][n-1] != 4*n-2 {
+// 		var m = n - 1
+// 		for {
+// 			if l[n][m] > 0 {
+// 				break
+// 			}
+// 			if m == 0 {
+// 				break
+// 			}
+// 			m--
+// 		}
+// 		l[n][m] -= 1
+// 		l[n][m+1] += 1
+// 	}
+// }
+// 	for n := uint8(len(l)); n > 0; n-- {
+// 		var m = n
+// 		for m > 0 {
+// 			m -= 1
+// 			if 2*(2*m+1) != l[n][m] {
+// 				v += l[n][m]
+// 			}
+// 		}
+// 	}
+
+// 	return
+// }
