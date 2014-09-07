@@ -2,6 +2,8 @@ package chemistry
 
 import "strconv"
 
+// AtomicNumber is the number of protons found in the nucleus of an
+// atom of that element
 type AtomicNumber byte
 
 func (n AtomicNumber) String() string {
@@ -15,6 +17,31 @@ func (e ErrInvalidElectronConfiguration) Error() string {
 		strconv.Itoa(int(e))
 }
 
+type Orbital uint8
+
+const (
+	ORBITAL_S Orbital = iota
+	ORBITAL_P
+	ORBITAL_D
+	ORBITAL_F
+	ORBITAL_G
+	ORBITAL_H
+	ORBITAL_I
+	ORBITAL_J
+	ORBITAL_K
+)
+
+var orbitals = "spdfghijk"
+
+func (o Orbital) String() string {
+
+	if int(o) < len(orbitals) {
+		return string(orbitals[o])
+	}
+	return "[orbital " + strconv.Itoa(int(o)) + "]"
+}
+
+// Element is chemical element
 type Element byte
 
 func (e Element) String() string {
@@ -25,7 +52,7 @@ func (e Element) String() string {
 	return ""
 }
 
-// Symbol returns symbol
+// Symbol returns element symbol
 func (e Element) Symbol() string {
 	if _, ok := names[e]; ok {
 		return names[e][0]
@@ -33,7 +60,7 @@ func (e Element) Symbol() string {
 	return ""
 }
 
-// Name returns full name
+// Name returns full element name
 func (e Element) Name() string {
 	if _, ok := names[e]; ok {
 		return names[e][1]
@@ -41,7 +68,7 @@ func (e Element) Name() string {
 	return ""
 }
 
-// Weight returns atomic weight
+// Weight returns atomic weight of element
 func (e Element) Weight() float32 {
 	if _, ok := weights[e]; ok {
 		return weights[e]
@@ -49,7 +76,7 @@ func (e Element) Weight() float32 {
 	return 0
 }
 
-// AtomicNumber returns element atomic number
+// AtomicNumber returns number of protons found in the nucleus
 func (e Element) AtomicNumber() AtomicNumber {
 	return AtomicNumber(e)
 }
@@ -59,7 +86,7 @@ func (e Element) ElectronConfiguration() ElectronConfiguration {
 	var (
 		n     uint8 = 1        // principal quantum number (n > 0)
 		l     uint8 = 0        // azimuthal quantum number (n - 1)
-		count       = uint8(e) // electron count
+		count       = uint8(e) // count of electron
 	)
 
 	ec := make(ElectronConfiguration)
@@ -125,45 +152,215 @@ sublevel:
 		goto sublevel
 	}
 
+	// create level 9 for elements wich has electron skipping to 9 lev
+	switch e {
+	case ELEMENT_Upe, ELEMENT_Uhn, ELEMENT_Uhu, ELEMENT_Uhp,
+		ELEMENT_Uhh, ELEMENT_Uhs, ELEMENT_Uho:
+		ec[9] = make([]uint8, 9)
+	}
+
 	// electron skipping
 	switch e {
 	case ELEMENT_Cr, ELEMENT_Cu:
-		ec[4][0] -= 1
-		ec[3][2] += 1
+		ec[4][ORBITAL_S] -= 1
+		ec[3][ORBITAL_D] += 1
 
 	case ELEMENT_Nb, ELEMENT_Mo, ELEMENT_Ru, ELEMENT_Rh, ELEMENT_Ag:
-		ec[5][0] -= 1
-		ec[4][2] += 1
+		ec[5][ORBITAL_S] -= 1
+		ec[4][ORBITAL_D] += 1
 
 	case ELEMENT_Pd:
-		ec[5][0] -= 2
-		ec[4][2] += 2
+		ec[5][ORBITAL_S] -= 2
+		ec[4][ORBITAL_D] += 2
 
 	case ELEMENT_Pt, ELEMENT_Au:
-		ec[6][0] -= 1
-		ec[5][2] += 1
+		ec[6][ORBITAL_S] -= 1
+		ec[5][ORBITAL_D] += 1
 
-	case ELEMENT_Ds, ELEMENT_Rg:
-		ec[7][0] -= 1
-		ec[6][2] += 1
-
-	case ELEMENT_La, ELEMENT_Gd:
-		ec[4][3] -= 1
-		ec[5][2] += 1
+	case ELEMENT_La, ELEMENT_Ce, ELEMENT_Gd:
+		ec[4][ORBITAL_F] -= 1
+		ec[5][ORBITAL_D] += 1
 
 	case ELEMENT_Ac, ELEMENT_Pa, ELEMENT_U, ELEMENT_Np, ELEMENT_Cm:
-		ec[5][3] -= 1
-		ec[6][2] += 1
+		ec[5][ORBITAL_F] -= 1
+		ec[6][ORBITAL_D] += 1
 
 	case ELEMENT_Th:
-		ec[5][3] -= 2
-		ec[6][2] += 2
+		ec[5][ORBITAL_F] -= 2
+		ec[6][ORBITAL_D] += 2
+
+	case ELEMENT_Lr:
+		ec[6][ORBITAL_D] -= 1
+		ec[7][ORBITAL_P] += 1
+
+	case ELEMENT_Ubu:
+		ec[5][ORBITAL_G] -= 1
+		ec[8][ORBITAL_P] += 1
+
+	case ELEMENT_Ubb:
+		ec[5][ORBITAL_G] -= 2
+		ec[7][ORBITAL_D] += 1
+		ec[8][ORBITAL_P] += 1
+
+	case ELEMENT_Ubt:
+		ec[5][ORBITAL_G] -= 3
+		ec[6][ORBITAL_F] += 1
+		ec[7][ORBITAL_D] += 1
+		ec[8][ORBITAL_P] += 1
+
+	case ELEMENT_Ubq, ELEMENT_Ubp:
+		ec[5][ORBITAL_G] -= 4
+		ec[6][ORBITAL_F] += 3
+		ec[8][ORBITAL_P] += 1
+
+	case ELEMENT_Ubh:
+		ec[5][ORBITAL_G] -= 4
+		ec[6][ORBITAL_F] += 2
+		ec[7][ORBITAL_D] += 1
+		ec[8][ORBITAL_P] += 1
+
+	case ELEMENT_Ubs, ELEMENT_Ubo, ELEMENT_Ube, ELEMENT_Utn,
+		ELEMENT_Utu, ELEMENT_Utb:
+		ec[5][ORBITAL_G] -= 4
+		ec[6][ORBITAL_F] += 2
+		ec[8][ORBITAL_P] += 2
+
+	case ELEMENT_Utt:
+		ec[5][ORBITAL_G] -= 5
+		ec[6][ORBITAL_F] += 3
+		ec[8][ORBITAL_P] += 2
+
+	case ELEMENT_Utq, ELEMENT_Utp, ELEMENT_Uth:
+		ec[5][ORBITAL_G] -= 6
+		ec[6][ORBITAL_F] += 4
+		ec[8][ORBITAL_P] += 2
+
+	case ELEMENT_Uts, ELEMENT_Uto:
+		ec[5][ORBITAL_G] -= 6
+		ec[6][ORBITAL_F] += 3
+		ec[7][ORBITAL_D] += 1
+		ec[8][ORBITAL_P] += 2
+
+	case ELEMENT_Ute:
+		ec[5][ORBITAL_G] -= 5
+		ec[6][ORBITAL_F] += 2
+		ec[7][ORBITAL_D] += 1
+		ec[8][ORBITAL_P] += 2
+
+	case ELEMENT_Uqn:
+		ec[5][ORBITAL_G] -= 4
+		ec[6][ORBITAL_F] += 1
+		ec[7][ORBITAL_D] += 1
+		ec[8][ORBITAL_P] += 2
+
+	case ELEMENT_Uqu:
+		ec[5][ORBITAL_G] -= 3
+		ec[6][ORBITAL_F] -= 1
+		ec[7][ORBITAL_D] += 2
+		ec[8][ORBITAL_P] += 2
+
+	case ELEMENT_Uqb:
+		ec[5][ORBITAL_G] -= 2
+		ec[6][ORBITAL_F] -= 2
+		ec[7][ORBITAL_D] += 2
+		ec[8][ORBITAL_P] += 2
+
+	case ELEMENT_Uqt:
+		ec[5][ORBITAL_G] -= 1
+		ec[6][ORBITAL_F] -= 3
+		ec[7][ORBITAL_D] += 2
+		ec[8][ORBITAL_P] += 2
+
+	case ELEMENT_Uqq, ELEMENT_Uqe:
+		ec[6][ORBITAL_F] -= 5
+		ec[7][ORBITAL_D] += 3
+		ec[8][ORBITAL_P] += 2
+
+	case ELEMENT_Uqp, ELEMENT_Uqh, ELEMENT_Uqs, ELEMENT_Uqo:
+		ec[6][ORBITAL_F] -= 4
+		ec[7][ORBITAL_D] += 2
+		ec[8][ORBITAL_P] += 2
+
+	case ELEMENT_Upn:
+		ec[6][ORBITAL_F] -= 6
+		ec[7][ORBITAL_D] += 4
+		ec[8][ORBITAL_P] += 2
+
+	case ELEMENT_Upu, ELEMENT_Upb:
+		ec[6][ORBITAL_F] -= 5
+		ec[7][ORBITAL_D] += 3
+		ec[8][ORBITAL_P] += 2
+
+	case ELEMENT_Upt:
+		ec[6][ORBITAL_F] -= 3
+		ec[7][ORBITAL_D] += 1
+		ec[8][ORBITAL_P] += 2
+
+	case ELEMENT_Upq:
+		ec[6][ORBITAL_F] -= 2
+		ec[8][ORBITAL_P] += 2
+
+	case ELEMENT_Upp:
+		ec[6][ORBITAL_F] -= 1
+		ec[7][ORBITAL_D] -= 1
+		ec[8][ORBITAL_P] += 2
+
+	case ELEMENT_Uph, ELEMENT_Ups, ELEMENT_Upo:
+		ec[7][ORBITAL_D] -= 2
+		ec[8][ORBITAL_P] += 2
+
+	case ELEMENT_Uhb:
+		ec[7][ORBITAL_D] -= 2
+		ec[8][ORBITAL_P] += 2
+
+	case ELEMENT_Uht:
+		ec[7][ORBITAL_D] -= 1
+		ec[8][ORBITAL_P] += 1
+
+	case ELEMENT_Uhp:
+		ec[8][ORBITAL_P] -= 1
+		ec[9][ORBITAL_S] += 1
+
+	case ELEMENT_Uhh:
+		ec[8][ORBITAL_P] -= 2
+		ec[9][ORBITAL_S] += 2
+
+	case ELEMENT_Upe, ELEMENT_Uhn, ELEMENT_Uhu:
+		ec[7][ORBITAL_D] -= 3
+		ec[8][ORBITAL_P] += 2
+		ec[9][ORBITAL_S] += 1
+
+	case ELEMENT_Uhs:
+		ec[8][ORBITAL_P] -= 3
+		ec[9][ORBITAL_S] += 2
+		ec[9][ORBITAL_P] += 1
+
+	case ELEMENT_Uho:
+		ec[8][ORBITAL_P] -= 4
+		ec[9][ORBITAL_S] += 2
+		ec[9][ORBITAL_P] += 2
+
+	case ELEMENT_Uhe:
+		ec[8][ORBITAL_P] -= 3
+		ec[9][ORBITAL_S] += 1
+		ec[9][ORBITAL_P] += 2
+
+	case ELEMENT_Usn:
+		ec[8][ORBITAL_P] -= 2
+		ec[9][ORBITAL_P] += 2
+
+	case ELEMENT_Usu:
+		ec[6][ORBITAL_G] -= 1
+		ec[8][ORBITAL_P] -= 1
+		ec[9][ORBITAL_P] += 2
+
+	case ELEMENT_Usb:
+		ec[6][ORBITAL_G] -= 2
+		ec[9][ORBITAL_P] += 2
 	}
 
 	return ec
 }
-
-var orbitals = "spdfghigk"
 
 // ElectronConfiguration object describes distribution of electrons
 // of an atom in atomic orbitals
@@ -178,7 +375,7 @@ func (ec ElectronConfiguration) String() string {
 	for int(n) <= len(ec) {
 		_, ok := ec[n]
 
-		if !ok || int(n) != len(ec[n]) || int(n)-1 > len(orbitals) {
+		if !ok || int(n) != len(ec[n]) {
 			panic(ErrInvalidElectronConfiguration(n))
 		}
 
@@ -190,9 +387,8 @@ func (ec ElectronConfiguration) String() string {
 		var l uint8
 		for l < n {
 			if ec[n][l] > 0 {
-				str += delim + strconv.Itoa(int(n)) +
-					string(orbitals[l]) + "^" +
-					strconv.Itoa(int(ec[n][l]))
+				str += delim + strconv.Itoa(int(n)) + Orbital(l).String() +
+					"^" + strconv.Itoa(int(ec[n][l]))
 			}
 			l += 1
 		}
@@ -227,7 +423,7 @@ findsublevel:
 		l -= 1
 	}
 
-	sublevstr = strconv.Itoa(int(n)) + string(orbitals[l]) + "^" +
+	sublevstr = strconv.Itoa(int(n)) + Orbital(l).String() + "^" +
 		strconv.Itoa(int(ec[n][l]))
 	if len(res) > 0 {
 		res = sublevstr + " " + res

@@ -6,7 +6,7 @@ References:
 ----------
 
     1. https://en.wikipedia.org/wiki/Extended_periodic_table
-    2.
+    2. http://en.wikipedia.org/wiki/Electron_configurations_of_the_elements_(data_page)
 
 */
 
@@ -199,7 +199,7 @@ var names = map[Element][2]string{
 	ELEMENT_Ne:  {"Ne", "Neon"},
 	ELEMENT_Na:  {"Na", "Sodium"},
 	ELEMENT_Mg:  {"Mg", "Magnesium"},
-	ELEMENT_Al:  {"Al", "Aluminum"},
+	ELEMENT_Al:  {"Al", "Aluminium"},
 	ELEMENT_Si:  {"Si", "Silicon"},
 	ELEMENT_P:   {"P", "Phosphorus"},
 	ELEMENT_S:   {"S", "Sulfur"},
@@ -241,7 +241,7 @@ var names = map[Element][2]string{
 	ELEMENT_Te:  {"Te", "Tellurium"},
 	ELEMENT_I:   {"I", "Iodine"},
 	ELEMENT_Xe:  {"Xe", "Xenon"},
-	ELEMENT_Cs:  {"Cs", "Cesium"},
+	ELEMENT_Cs:  {"Cs", "Caesium"},
 	ELEMENT_Ba:  {"Ba", "Barium"},
 	ELEMENT_La:  {"La", "Lanthanum"},
 	ELEMENT_Ce:  {"Ce", "Cerium"},
@@ -298,7 +298,7 @@ var names = map[Element][2]string{
 	ELEMENT_Mt:  {"Mt", "Meitnerium"},
 	ELEMENT_Ds:  {"Ds", "Darmstadtium"},
 	ELEMENT_Rg:  {"Rg", "Roentgenium"},
-	ELEMENT_Cn:  {"Cn", "Roentgenium"},
+	ELEMENT_Cn:  {"Cn", "Copernicium"},
 	ELEMENT_Uut: {"Uut", "Ununtrium"},
 	ELEMENT_Fl:  {"Fl", "Flerovium"},
 	ELEMENT_Uup: {"Uup", "Ununpentium"},
@@ -444,7 +444,7 @@ var weights = map[Element]float32{
 	ELEMENT_Au: 196.96655,
 	ELEMENT_Hg: 200.59,
 	ELEMENT_Tl: 204.3833,
-	ELEMENT_Pb: 106.42,
+	ELEMENT_Pb: 207.2,
 	ELEMENT_Bi: 208.98038,
 	ELEMENT_Po: 208.9824,
 	ELEMENT_At: 209.9871,
